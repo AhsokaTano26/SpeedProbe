@@ -1,0 +1,9 @@
+.git
+.env
+bin
+speedprobe
+*.test
+coverage.out
+docs
+.speedprobe-tokens
+*.pem

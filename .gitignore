@@ -1,0 +1,12 @@
+/speedprobe
+/bin/
+/.env
+*.test
+coverage.out
+/.speedprobe-tokens
+/.idea/
+/logs/
+/speedprobe.jsonl
+/speedprobe-console.log
+/dist/
+__pycache__/

@@ -1,0 +1,33 @@
+services:
+  speedprobe:
+    build:
+      context: .
+      args:
+        VERSION: ${SPEEDPROBE_VERSION:-dev}
+    image: speedprobe:local
+    restart: unless-stopped
+    ports:
+      - "${SPEEDPROBE_BIND_IP:-127.0.0.1}:${SPEEDPROBE_PORT:-8080}:8080"
+    environment:
+      SPEEDPROBE_ADDR: ":8080"
+      SPEEDPROBE_NETWORK: "tcp"
+      SPEEDPROBE_TOKENS: ${SPEEDPROBE_TOKENS:?Set SPEEDPROBE_TOKENS in .env}
+      SPEEDPROBE_MAX_CONCURRENT: ${SPEEDPROBE_MAX_CONCURRENT:-32}
+      SPEEDPROBE_MAX_PER_TOKEN: ${SPEEDPROBE_MAX_PER_TOKEN:-8}
+      SPEEDPROBE_MAX_BYTES: ${SPEEDPROBE_MAX_BYTES:-1073741824}
+      SPEEDPROBE_MAX_DURATION: ${SPEEDPROBE_MAX_DURATION:-60s}
+      SPEEDPROBE_BYTES_PER_SECOND: ${SPEEDPROBE_BYTES_PER_SECOND:-0}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 2.0
+    pids_limit: 128
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
