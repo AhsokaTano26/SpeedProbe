@@ -1,0 +1,2 @@
+# Keep text files on LF across platforms, including Windows autocrlf checkouts.
+* text=auto eol=lf

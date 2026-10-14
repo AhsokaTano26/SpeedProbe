@@ -51,7 +51,13 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache-dependency-path: go.mod
-      - run: test -z "$(gofmt -l cmd internal)"
+      - name: Check Go formatting
+        run: |
+          unformatted=$(gofmt -l cmd internal)
+          if [[ -n "$unformatted" ]]; then
+            printf 'Run gofmt on these files:\n%s\n' "$unformatted" >&2
+            exit 1
+          fi
       - run: go vet ./...
       - run: go test -race ./...
       - run: CGO_ENABLED=0 go build -trimpath -o speedprobe ./cmd/speedprobe
