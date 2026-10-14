@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"speedprobe/internal/protocol"
 )
 
 func testServer(t *testing.T, mutate func(*Config)) *Server {
@@ -143,7 +145,8 @@ func TestUploadCountsReceivedBytes(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Bytes != 17001 || result.Elapsed <= 0 {
+	// An in-memory upload can finish within one clock tick on Windows.
+	if result.Bytes != 17001 || result.Elapsed < 0 {
 		t.Fatalf("%+v", result)
 	}
 }
@@ -263,6 +266,15 @@ func TestUploadRateChargesActualBytes(t *testing.T) {
 	}
 	if time.Since(start) > 300*time.Millisecond {
 		t.Fatal("charged full buffer for short reads")
+	}
+	var result protocol.UploadResult
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	// Rate limiting introduces a measurable wait, so the acknowledgement
+	// must report positive elapsed time even on a coarse system clock.
+	if result.Bytes != 20 || result.ElapsedSeconds <= 0 {
+		t.Fatalf("invalid rate-limited upload acknowledgement: %+v", result)
 	}
 }
 
