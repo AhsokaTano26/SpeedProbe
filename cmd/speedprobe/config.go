@@ -168,6 +168,7 @@ func parseServe(args []string, getenv func(string) string, out io.Writer) (serve
 func parseTest(args []string, getenv func(string) string, out io.Writer) (testConfig, error) {
 	c := testConfig{Client: client.DefaultConfig()}
 	fs := flags("test", out)
+	envFile := fs.String("env-file", ".env", "client configuration file (empty disables loading; missing default is optional)")
 	fs.StringVar(&c.Client.ServerURL, "server", setting(getenv, "SERVER", ""), "server URL, optionally with proxy path prefix")
 	fs.StringVar(&c.Client.Token, "token", setting(getenv, "TOKEN", ""), "bearer token (prefer env or token file)")
 	fs.Lookup("token").DefValue = ""
@@ -190,6 +191,9 @@ func parseTest(args []string, getenv func(string) string, out io.Writer) (testCo
 	}
 	if fs.NArg() != 0 {
 		return c, errors.New("test does not accept positional arguments")
+	}
+	if err := applyClientEnv(fs, *envFile, getenv); err != nil {
+		return c, err
 	}
 	var err error
 	if *tokenFile != "" {

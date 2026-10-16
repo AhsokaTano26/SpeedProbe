@@ -132,6 +132,9 @@ class ReleaseTests(unittest.TestCase):
             shutil.copy2(SCRIPT, workspace / "scripts" / SCRIPT.name)
             for name in ("go.mod", "README.md", "LICENSE", ".env.example"):
                 shutil.copy2(ROOT / name, workspace / name)
+            (workspace / "docs").mkdir()
+            shutil.copy2(ROOT / "docs" / "guide.md", workspace / "docs" / "guide.md")
+            (workspace / "docs" / "private-notes.md").write_text("never-package-this\n")
             (workspace / ".env").write_text("SPEEDPROBE_TOKEN=never-package-this\n")
             (workspace / ".speedprobe-tokens").write_text("never-package-this\n")
             output = Path(directory) / "output"
@@ -149,14 +152,16 @@ class ReleaseTests(unittest.TestCase):
                     archive = output / f"speedprobe_{tag}_{target}{suffix}"
                     self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), checksums[archive.name])
                     binary = "speedprobe.exe" if goos == "windows" else "speedprobe"
-                    expected = {binary, "README.md", "LICENSE", ".env.example", "deploy/nginx.conf"}
+                    expected = {binary, "README.md", "LICENSE", ".env.example", "deploy/nginx.conf", "docs/guide.md"}
                     if suffix == ".zip":
                         with zipfile.ZipFile(archive) as bundle:
                             self.assertEqual(set(bundle.namelist()), expected)
+                            self.assertEqual(bundle.read("docs/guide.md"), (ROOT / "docs" / "guide.md").read_bytes())
                             executable = bundle.read(binary)
                     else:
                         with tarfile.open(archive) as bundle:
                             self.assertEqual(set(bundle.getnames()), expected)
+                            self.assertEqual(bundle.extractfile("docs/guide.md").read(), (ROOT / "docs" / "guide.md").read_bytes())
                             self.assertTrue(bundle.getmember(binary).mode & 0o111)
                             executable = bundle.extractfile(binary).read()
                     path = Path(directory) / binary

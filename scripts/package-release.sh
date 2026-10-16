@@ -53,7 +53,7 @@ for target in "${targets[@]}"; do
   binary=speedprobe
   if [[ "$goos" == 'windows' ]]; then binary=speedprobe.exe; fi
   stage="$release_work/$target"
-  mkdir -p "$stage/deploy"
+  mkdir -p "$stage/deploy" "$stage/docs"
   printf 'Building %s %s\n' "$release_version" "$target"
   CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" GOARM="$goarm" go build \
     -trimpath -buildvcs=false -ldflags "-s -w -X main.version=$release_version" \
@@ -61,15 +61,16 @@ for target in "${targets[@]}"; do
   chmod 755 "$stage/$binary"
   cp LICENSE README.md .env.example "$stage/"
   cp deploy/nginx.conf "$stage/deploy/"
+  cp docs/guide.md "$stage/docs/"
   name="speedprobe_${release_version}_${target}"
   if [[ "$goos" == 'windows' ]]; then
     # Build a fresh ZIP: updating an old ZIP would retain obsolete entries.
-    (cd "$stage" && zip -q "$release_work/$name.zip" "$binary" LICENSE README.md .env.example deploy/nginx.conf)
+    (cd "$stage" && zip -q "$release_work/$name.zip" "$binary" LICENSE README.md .env.example deploy/nginx.conf docs/guide.md)
     mv "$release_work/$name.zip" "$release_out/$name.zip"
     archives+=("$name.zip")
   else
     # macOS bsdtar otherwise injects AppleDouble/xattr companion files.
-    COPYFILE_DISABLE=1 tar -C "$stage" -czf "$release_out/$name.tar.gz" "$binary" LICENSE README.md .env.example deploy/nginx.conf
+    COPYFILE_DISABLE=1 tar -C "$stage" -czf "$release_out/$name.tar.gz" "$binary" LICENSE README.md .env.example deploy/nginx.conf docs/guide.md
     archives+=("$name.tar.gz")
   fi
 done
